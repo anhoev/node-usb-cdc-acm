@@ -29,10 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { Duplex } from 'stream';
-import Debug from 'debug';
-import usb from 'usb';
-import splitDescriptors from './split-descriptors';
+const Duplex = require('stream').Duplex;
+const Debug = require('debug');
+const usb = require('usb');
+const splitDescriptors = require('./split-descriptors');
 
 // Two debug levels: one for initialization/teardown messages, and one
 // for logging all data being sent/recv around
