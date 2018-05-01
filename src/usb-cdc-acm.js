@@ -29,10 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-const Duplex = require('stream').Duplex;
-const Debug = require('debug');
-const usb = require('usb');
-const splitDescriptors = require('./split-descriptors');
+import { Duplex } from 'stream';
+import Debug from 'debug';
+import usb from 'usb';
+import splitDescriptors from './split-descriptors';
 
 // Two debug levels: one for initialization/teardown messages, and one
 // for logging all data being sent/recv around
@@ -47,7 +47,7 @@ const debugData = Debug('usb-cdc-acm:data');
 // Will return boolean `false` if the interface is not valid,
 // or an integer number (corresponding to the associated data interface)
 function assertCdcInterface(iface) {
-    const {endpoints, descriptor} = iface;
+    const { endpoints, descriptor } = iface;
 
     if (descriptor.bInterfaceClass !== usb.LIBUSB_CLASS_COMM || // 2, CDC
         descriptor.bInterfaceSubClass !== 2) { // ACM
@@ -75,7 +75,7 @@ function assertCdcInterface(iface) {
                 // Master interface should be the current one!!
                 return false;
             }
-            [, , , , slaveInterfaceId] = desc; // slaveInterfaceId = desc[4];
+            [,,,, slaveInterfaceId] = desc; // slaveInterfaceId = desc[4];
         }
     }
 
@@ -93,7 +93,7 @@ function assertCdcInterface(iface) {
 // Specifically, the interface must have only one
 // "in" bulk endpoint and one "out" bulk endpoint.
 function assertDataInterface(iface) {
-    const {endpoints} = iface;
+    const { endpoints } = iface;
 
     return (
         // Right class (0x0A)
@@ -109,7 +109,7 @@ function assertDataInterface(iface) {
 }
 
 
-module.exports = class UsbCdcAcm extends Duplex {
+export default class UsbCdcAcm extends Duplex {
     constructor(ifaceCdc, options = {}) {
         const ifaceDataId = assertCdcInterface(ifaceCdc);
         if (ifaceDataId === false) {
@@ -164,12 +164,8 @@ module.exports = class UsbCdcAcm extends Duplex {
         // Set baud rate and serial line params,
         // then set the line as active
         this._controlSetLineCoding(options.baudRate || 9600)
-            .then(() => {
-                this._controlLineState(true);
-            })
-            .then(() => {
-                this._controlGetLineCoding();
-            })
+            .then(() => { this._controlLineState(true); })
+            .then(() => { this._controlGetLineCoding(); })
             .then(() => {
                 this.in.on('data', data => this._onData(data));
                 this.in.on('error', err => this.emit('error', err));
@@ -239,13 +235,9 @@ module.exports = class UsbCdcAcm extends Duplex {
                 this.out.removeAllListeners();
 
                 this.ifaceCdc.release(true, err => {
-                    if (err) {
-                        throw err;
-                    }
+                    if (err) { throw err; }
                     this.ifaceData.release(true, err2 => {
-                        if (err2) {
-                            throw err2;
-                        }
+                        if (err2) { throw err2; }
 
                         if (this._reattachCdcDriverAtFinal) {
                             this.ifaceCdc.attachKernelDriver();
@@ -323,36 +315,18 @@ module.exports = class UsbCdcAcm extends Duplex {
             let stopBits;
             let parity;
             switch (rawStopBits) {
-                case 0:
-                    stopBits = 1;
-                    break;
-                case 1:
-                    stopBits = 1.5;
-                    break;
-                case 2:
-                    stopBits = 2;
-                    break;
-                default:
-                    throw new Error('Invalid value for stop bits received (during a GET_LINE_CODING request)');
+                case 0: stopBits = 1; break;
+                case 1: stopBits = 1.5; break;
+                case 2: stopBits = 2; break;
+                default: throw new Error('Invalid value for stop bits received (during a GET_LINE_CODING request)');
             }
             switch (rawParity) {
-                case 0:
-                    parity = 'none';
-                    break;
-                case 1:
-                    parity = 'odd';
-                    break;
-                case 2:
-                    parity = 'even';
-                    break;
-                case 3:
-                    parity = 'mark';
-                    break;
-                case 4:
-                    parity = 'space';
-                    break;
-                default:
-                    throw new Error('Invalid value for parity received (during a GET_LINE_CODING request)');
+                case 0: parity = 'none'; break;
+                case 1: parity = 'odd'; break;
+                case 2: parity = 'even'; break;
+                case 3: parity = 'mark'; break;
+                case 4: parity = 'space'; break;
+                default: throw new Error('Invalid value for parity received (during a GET_LINE_CODING request)');
             }
 
             debugInfo('Got line coding: ', data);
